@@ -10,7 +10,7 @@ exports.createVendor = async (req, res) => {
      // ✅ Handle duplicate error cleanly
     if (error.code === 11000) {
       return res.status(400).json({
-        message: "Vendor name or ID already exists"
+        message: "Vendor name already exists"
       });
     }
     
