@@ -7,6 +7,13 @@ exports.createVendor = async (req, res) => {
     const vendor = await Vendor.create(req.body);
     res.status(201).json(vendor);
   } catch (error) {
+     // ✅ Handle duplicate error cleanly
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "Vendor name or ID already exists"
+      });
+    }
+    
     res.status(500).json({ error: error.message });
   }
 };
