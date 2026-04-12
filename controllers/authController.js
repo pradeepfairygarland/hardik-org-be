@@ -27,3 +27,32 @@ exports.registerUser = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+const generateToken = require("../utils/generateToken");
+
+exports.loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const isMatch = await require("bcryptjs").compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid password" });
+    }
+
+    res.json({
+      _id: user._id,
+      email: user.email,
+      token: generateToken(user._id)
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
