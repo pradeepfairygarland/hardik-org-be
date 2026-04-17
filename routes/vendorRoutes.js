@@ -4,24 +4,26 @@ const router = express.Router();
 const {
   createVendor,
   getVendors,
+  getVendorById,
   updateVendor,
   deleteVendor
 } = require("../controllers/vendorController");
 
-
 const protect = require("../middleware/authMiddleware");
 
+// ✅ CREATE
+router.post("/addNew", protect, createVendor);
 
-// CREATE
-router.post("/", protect, createVendor);
+// ✅ READ ALL
+router.get("/vendorList", protect, getVendors);
 
-// READ ALL
-router.get("/", protect, getVendors);
+// ✅ READ ONE
+router.get("/get/:id", protect, getVendorById);
 
-// UPDATE
-router.put("/:id", protect, updateVendor);
+// ✅ UPDATE
+router.put("/update/:id", protect, updateVendor);
 
-// DELETE
-router.delete("/:id", protect, deleteVendor);
+// ✅ DELETE
+router.delete("/delete/:id", protect, deleteVendor);
 
 module.exports = router;

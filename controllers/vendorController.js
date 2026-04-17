@@ -30,6 +30,23 @@ exports.getVendors = async (req, res) => {
 };
 
 
+// ✅ GET SINGLE Vendor
+exports.getVendorById = async (req, res) => {
+  try {
+    const vendor = await Vendor.findById(req.params.id);
+
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    res.json(vendor);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+
 // ✅ UPDATE Vendor
 exports.updateVendor = async (req, res) => {
   try {
