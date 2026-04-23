@@ -22,7 +22,7 @@ exports.createVendor = async (req, res) => {
 // ✅ GET ALL Vendors
 exports.getVendors = async (req, res) => {
   try {
-    const vendors = await Vendor.find();
+    const vendors = await Vendor.find({ is_active: 1 });
     res.json(vendors);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -35,7 +35,7 @@ exports.getVendorById = async (req, res) => {
   try {
     const vendor = await Vendor.findById(req.params.id);
 
-    if (!vendor) {
+    if (!vendor || vendor.is_active !== 1) {
       return res.status(404).json({ message: "Vendor not found" });
     }
 
@@ -70,7 +70,11 @@ exports.updateVendor = async (req, res) => {
 // ✅ DELETE Vendor
 exports.deleteVendor = async (req, res) => {
   try {
-    const vendor = await Vendor.findByIdAndDelete(req.params.id);
+    const vendor = await Vendor.findByIdAndUpdate(
+      req.params.id,
+      { is_active: 0 },
+      { new: true }
+    );
 
     if (!vendor) {
       return res.status(404).json({ message: "Vendor not found" });

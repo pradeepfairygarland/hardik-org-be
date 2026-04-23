@@ -10,7 +10,11 @@ const vendorSchema = new mongoose.Schema(
   v_poc_name: String,
   v_contact: String,
   v_poc_contact: String,
-  v_address: String
+  v_address: String,
+  is_active: {
+    type: Number,
+    default: 1
+  }
 },
 { timestamps: true }
 );

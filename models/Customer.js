@@ -8,9 +8,19 @@ const customerSchema = new mongoose.Schema(
     unique: true,   // optional but recommended
     trim: true
   },
+  c_shop_name: {
+    type: String,
+    required: true,
+    unique: true,   // optional but recommended
+    trim: true
+  },
   c_contact: {
     type: Number,
     required: true
+  },
+  is_active: {
+    type: Number,
+    default: 1
   }
 },
 { timestamps: true }

@@ -4,11 +4,11 @@ const Customer = require("../models/Customer");
 // ✅ CREATE
 exports.createCustomer = async (req, res) => {
   try {
-    const { c_name, c_contact } = req.body;
+    const { c_name, c_shop_name, c_contact } = req.body;
 
-    if (!c_name || !c_contact) {
+    if (!c_name || !c_shop_name || !c_contact) {
       return res.status(400).json({
-        message: "c_name and c_contact are required"
+        message: "c_name, c_shop_name and c_contact are required"
       });
     }
 
@@ -32,7 +32,7 @@ exports.createCustomer = async (req, res) => {
 // ✅ GET ALL
 exports.getCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find();
+    const customers = await Customer.find({ is_active: 1 });
     res.json(customers);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -45,7 +45,7 @@ exports.getCustomerById = async (req, res) => {
   try {
     const customer = await Customer.findById(req.params.id);
 
-    if (!customer) {
+    if (!customer || customer.is_active !== 1) {
       return res.status(404).json({ message: "Customer not found" });
     }
 
@@ -79,7 +79,11 @@ exports.updateCustomer = async (req, res) => {
 // ✅ DELETE
 exports.deleteCustomer = async (req, res) => {
   try {
-    const customer = await Customer.findByIdAndDelete(req.params.id);
+    const customer = await Customer.findByIdAndUpdate(
+      req.params.id,
+      { is_active: 0 },
+      { new: true }
+    );
 
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
