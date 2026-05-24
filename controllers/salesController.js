@@ -1,8 +1,8 @@
-const Purchase = require("../models/Purchase");
+const Sale = require("../models/Sales");
 const Product = require("../models/Product");
-const Vendor = require("../models/Vendor");
+const Customer = require("../models/Customer");
 
-// ✅ Helper function to calculate final amount
+// Helper function to calculate final amount
 const calculateAmounts = (totalAmount, gstPercent = 0, roundOffAmt = 0) => {
   const gstAmount = (totalAmount * gstPercent) / 100;
   const finalAmount = totalAmount + gstAmount + roundOffAmt;
@@ -13,15 +13,15 @@ const calculateAmounts = (totalAmount, gstPercent = 0, roundOffAmt = 0) => {
   };
 };
 
-// ✅ CREATE Purchase Transaction
-exports.createPurchase = async (req, res) => {
+// CREATE Sale Transaction
+exports.createSale = async (req, res) => {
   try {
-    const { vendor_id, purchase_date, items, gst_percent = 0, round_off_amt = 0 } = req.body;
+    const { customer_id, sales_date, items, gst_percent = 0, round_off_amt = 0 } = req.body;
 
-    // Validate vendor exists
-    const vendor = await Vendor.findById(vendor_id);
-    if (!vendor || vendor.is_active !== 1) {
-      return res.status(404).json({ message: "Vendor not found" });
+    // Validate customer exists
+    const customer = await Customer.findById(customer_id);
+    if (!customer || customer.is_active !== 1) {
+      return res.status(404).json({ message: "Customer not found" });
     }
 
     // Validate all products exist and calculate total amount
@@ -55,10 +55,10 @@ exports.createPurchase = async (req, res) => {
     // Calculate GST and final amount
     const { gstAmount, finalAmount } = calculateAmounts(totalAmount, gst_percent, round_off_amt);
 
-    // Create purchase transaction
-    const purchase = await Purchase.create({
-      vendor_id,
-      purchase_date: purchase_date || Date.now(),
+    // Create sale transaction
+    const sale = await Sale.create({
+      customer_id,
+      sales_date: sales_date || Date.now(),
       items: validatedItems,
       total_amount: totalAmount,
       gst_percent,
@@ -68,78 +68,78 @@ exports.createPurchase = async (req, res) => {
     });
 
     // Populate references for response
-    const populatedPurchase = await Purchase.findById(purchase._id)
-      .populate("vendor_id")
+    const populatedSale = await Sale.findById(sale._id)
+      .populate("customer_id")
       .populate("items.product_id");
 
-    res.status(201).json(populatedPurchase);
+    res.status(201).json(populatedSale);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// ✅ GET ALL Purchase Transactions
-exports.getPurchases = async (req, res) => {
+// GET ALL Sale Transactions
+exports.getSales = async (req, res) => {
   try {
-    const purchases = await Purchase.find({ is_active: 1 })
-      .populate("vendor_id", "v_name v_contact")
+    const sales = await Sale.find({ is_active: 1 })
+      .populate("customer_id", "c_name c_contact")
       .populate("items.product_id", "p_name p_price")
-      .sort({ purchase_date: -1 });
+      .sort({ sales_date: -1 });
 
-    res.json(purchases);
+    res.json(sales);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// ✅ GET SINGLE Purchase Transaction
-exports.getPurchaseById = async (req, res) => {
+// GET SINGLE Sale Transaction
+exports.getSaleById = async (req, res) => {
   try {
-    const purchase = await Purchase.findById(req.params.id)
-      .populate("vendor_id")
+    const sale = await Sale.findById(req.params.id)
+      .populate("customer_id")
       .populate("items.product_id");
 
-    if (!purchase || purchase.is_active !== 1) {
-      return res.status(404).json({ message: "Purchase not found" });
+    if (!sale || sale.is_active !== 1) {
+      return res.status(404).json({ message: "Sale not found" });
     }
 
-    res.json(purchase);
+    res.json(sale);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// ✅ GET Purchases by Vendor
-exports.getPurchasesByVendor = async (req, res) => {
+// GET Sales by Customer
+exports.getSalesByCustomer = async (req, res) => {
   try {
-    const purchases = await Purchase.find({
-      vendor_id: req.params.vendor_id,
+    const sales = await Sale.find({
+      customer_id: req.params.customer_id,
       is_active: 1
     })
-      .populate("vendor_id", "v_name v_contact")
+      .populate("customer_id", "c_name c_contact")
       .populate("items.product_id", "p_name p_price")
-      .sort({ purchase_date: -1 });
+      .sort({ sales_date: -1 });
 
-    res.json(purchases);
+    res.json(sales);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// ✅ UPDATE Purchase Transaction
-exports.updatePurchase = async (req, res) => {
+// UPDATE Sale Transaction
+exports.updateSale = async (req, res) => {
   try {
-    const { items, vendor_id, purchase_date, gst_percent = 0, round_off_amt = 0 } = req.body;
+    const { items, customer_id, sales_date, gst_percent = 0, round_off_amt = 0 } = req.body;
 
-    // Validate vendor if being updated
-    if (vendor_id) {
-      const vendor = await Vendor.findById(vendor_id);
-      if (!vendor || vendor.is_active !== 1) {
-        return res.status(404).json({ message: "Vendor not found" });
+    // Validate customer if being updated
+    if (customer_id) {
+      const customer = await Customer.findById(customer_id);
+      if (!customer || customer.is_active !== 1) {
+        return res.status(404).json({ message: "Customer not found" });
       }
     }
 
-    let updateData = { vendor_id, purchase_date, gst_percent, round_off_amt };
+    let updateData = { customer_id, sales_date, gst_percent, round_off_amt };
     let totalAmount = 0;
     let validatedItems = [];
 
@@ -177,46 +177,46 @@ exports.updatePurchase = async (req, res) => {
       updateData.final_amount = finalAmount;
     } else {
       // If only GST or round-off is being updated, recalculate with existing total
-      const purchase = await Purchase.findById(req.params.id);
-      if (purchase) {
-        const { gstAmount, finalAmount } = calculateAmounts(purchase.total_amount, gst_percent, round_off_amt);
+      const sale = await Sale.findById(req.params.id);
+      if (sale) {
+        const { gstAmount, finalAmount } = calculateAmounts(sale.total_amount, gst_percent, round_off_amt);
         updateData.gst_amount = gstAmount;
         updateData.final_amount = finalAmount;
       }
     }
 
-    const purchase = await Purchase.findByIdAndUpdate(
+    const sale = await Sale.findByIdAndUpdate(
       req.params.id,
       updateData,
       { new: true }
     )
-      .populate("vendor_id")
+      .populate("customer_id")
       .populate("items.product_id");
 
-    if (!purchase) {
-      return res.status(404).json({ message: "Purchase not found" });
+    if (!sale) {
+      return res.status(404).json({ message: "Sale not found" });
     }
 
-    res.json(purchase);
+    res.json(sale);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// ✅ DELETE Purchase Transaction (Soft Delete)
-exports.deletePurchase = async (req, res) => {
+// DELETE Sale Transaction (Soft Delete)
+exports.deleteSale = async (req, res) => {
   try {
-    const purchase = await Purchase.findByIdAndUpdate(
+    const sale = await Sale.findByIdAndUpdate(
       req.params.id,
       { is_active: 0 },
       { new: true }
     );
 
-    if (!purchase) {
-      return res.status(404).json({ message: "Purchase not found" });
+    if (!sale) {
+      return res.status(404).json({ message: "Sale not found" });
     }
 
-    res.json({ message: "Purchase deleted successfully" });
+    res.json({ message: "Sale deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
